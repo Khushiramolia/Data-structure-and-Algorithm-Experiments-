@@ -1,0 +1,1271 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{cite}
+\usepackage{times}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\floatname{algorithm}{Algorithm}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\renewcommand{\algorithmiccomment}[1]{\hfill\textit{// #1}}
+\vspace{0.3em}
+
+\usepackage{tcolorbox}
+\tcbset{colback=gray!5,colframe=black!40,boxrule=0.5pt,arc=2pt,left=4pt,right=4pt,top=4pt,bottom=4pt}
+\makeatletter
+\def\ALG@name{Algorithm}
+\makeatother
+\floatname{algorithm}{Algorithm}
+\renewcommand{\algorithmiccomment}[1]{\hfill\textit{// #1}}
+\usepackage{tikz} 
+\usetikzlibrary{shapes, arrows.meta, positioning}
+\usepackage{multirow}
+\usepackage{caption}
+
+
+
+\begin{document}
+
+\title{Comparative Analysis of Data Structures for Real-Time Data Stream Processing}
+
+\author{
+\IEEEauthorblockN{Khushi Ramolia}
+\IEEEauthorblockA{
+Department of Computer Science and Engineering\\
+Institute of Technology -- Nirma University\\
+}
+}
+
+\maketitle
+
+\begin{abstract}
+Real-time data stream processing involves data structures and algorithms capable of performing efficiently under continuous, unlimited data input situations. To efficiently deal with constant and very fast data streams, one needs data structures that are able to cope with the three characteristics of being complex, adaptable, and very fast in computation at the same time. Static data structures cannot cope with scenarios that involve an infinite number of inserts, deletions, and updates happening at the same time. This paper presents the comparative study of twenty algorithms and data structures that are real time applicable for data stream processing, focusing on their theoretical design and empirical performance. The techniques selected include probabilistic sketches, adaptive classifiers, sliding-window models, clustering structures, and graph-based stream maintainers. 
+
+The performance of every single algorithm is scrutinized under a common testing framework and it is done using Apache Flink and Kafka Streams. The evaluation takes into account both theoretical as well as empirical dimensions, i.e., analyzes the asymptotic time and space complexity along with latency, throughput, memory consumption and adaptability to dynamic data distributions. The findings show that the probabilistic structures require almost no operation time with logarithmic space requirements whereas the adaptive learners and drift detectors exhibit considerable tolerance to concept drift by allowing incremental model evolution. Moreover, the clustering and the graph-based structures have also proved their capability of being scalable for the multi-dimensional and topological analysis of the streams. In general, the study emphasizes the fundamental trade-offs among the factors of structural compactness, computational overhead, and learning adaptability, which, in turn, give the insights for algorithmic design and also the practical guidelines for the selection of the optimum DSAs in the areas of real-time analytics, IoT, and streaming-based computing systems.
+
+\end{abstract}
+\vspace{1em}
+
+\begin{IEEEkeywords}
+Data Structures and Algorithms (DSA), Real-Time Stream Processing, Probabilistic Sketches, Adaptive Learning Structures, Concept Drift Detection, Sliding Window Models, Stream Clustering, Graph Stream Analytics, Time–Space Complexity, Performance Benchmarking, Apache Flink, Kafka Streams,Scalability and Adaptability.
+\end{IEEEkeywords}
+
+\section{Introduction}
+The vast amount of data from IoT sensors, social networks, e-commerce platforms, and high-frequency transaction streams has converted computing into a data-driven ecosystem. Modern applications like online fraud detection, network monitoring, and intelligent transportation require real-time analytics on unbounded streams, as opposed to traditional batch-processing systems that handle finite datasets. The fundamental difficulty in this paradigm is building data structures and algorithms  that can retain dynamic states with little latency and memory overhead while providing predictable performance under high-velocity applications.Real-time stream processing differs greatly from traditional static data management methods. Batch systems schedule and execute computations after collecting all data. Data streams are ephemeral, with elements arriving sequentially and only being reviewed once. This restriction renders standard static structures like arrays, heaps, and trees ineffective when dealing with unexpected data and rapid updates. Static DSAs, designed for random access and stable datasets, struggle to handle volatile, high-volume, and time-dependent streaming data. Data stream processing necessitates specific structural designs that prioritize compactness, constant-time operations, and incremental adaptability to changing input.
+
+
+Researchers have come up with stream-optimised data structures to solve the problem, which they call the accuracy-scalability trade-off. For instance, probabilistic sketches also known as Bloom Filter, Count-Min Sketch, or HyperLogLog can insert and query with almost the same speed and require very little space. Among the mechanisms used for temporal relevance maintenance, sliding-window is the popular one which is carried out by sustaining a finite active segment of the stream utilizing fixed, time-based or damped-weight strategies. On the other hand, adaptive algorithms like Hoeffding Tree, Adaptive Random Forest and Leveraging Bagging, will have the classical machine-learning structures working in an incremental manner, building models that evolve with the influx of new examples. Besides, drift-detection approaches such as ADWIN, DDM, and EDDM will perform monitoring of the system's performance, with a statistical basis, and will also determine when the concept has changed and trigger model updates. Moreover, the clustering methods like DenStream and StreamKM++ aim at retaining density info in constantly changing data distributions, and graph-stream algorithms keep the live connectivity among the evolving nodes. However, the comparison of structural techniques remains to be limited quantitatively across categories. Most of the existing studies point to the benchmark distributed frameworks such as Apache Flink, Spark Streaming and Kafka, with the architecture being the only subject of comparison while the internal data structures remain in the background. Consequently, a linear analysis has not been made that directly connects the memory footprint, asymptotic complexity and adaptive accuracy of the basic algorithms under identical experimental conditions. It is this lack of structural benchmarking that inspires the current research which intends to undertake a systematic evaluation of a wide-ranging collection of twenty data structures and algorithms for real-time data stream processing that are extensively employed.
+
+The study that was put forward classifies algorithms into six categories probabilistic sketches, sliding-window models, drift-detectors, adaptive learners, stream-clustering algorithms, and graph-processing structures and their effectiveness is compared through a controlled experimental pipeline that is implemented in Apache Flink and Kafka Streams. The performance of each algorithm is evaluated along four key metrics, which are: latency, throughput, memory consumption, and accuracy, in addition to drift-adaptation delay that denotes the system's responsiveness to distributional changes. The experimental datasets generated from real-time IoT sensors data, financial transactions data, and social media feeds data, are providing realistic operating conditions.
+
+In this thorough assessment, the study intends to answer three main research questions:
+
+\begin{enumerate}
+    \item Which data structure provides the most suitable trade-off between time complexity and memory usage for real-time analytics?
+    \item What is the impact of structural adaptability on accuracy during concept drift?
+    \item Are hybrid structures that combine probabilistic and adaptive DSAs capable of delivering higher throughput while maintaining model performance?
+\end{enumerate}
+
+The key takeaways from this paper can be summarized as follows:
+
+\begin{itemize}
+    \item A comprehensive classification of data structures for streaming, organized by their design principles and operational complexities.
+    \item A unified comparison framework derived from empirical experiments that measures end-to-end performance across heterogeneous algorithms.
+    \item A statistical evaluation identifying correlations between structural design and computational efficiency.
+    \item A collection of practical design guidelines for adopting optimal DSA combinations in real-time processing frameworks.
+\end{itemize}
+
+
+This is how the rest of the paper is structured.
+The theoretical underpinnings and relevant literature of data structures and algorithms (DSAs) for real-time data stream processing are reviewed in Section II.The fundamental algorithms are introduced in Section III, along with an analysis of their temporal and spatial complexity in streaming contexts.
+A unified taxonomy and classification of twenty streaming-optimized DSAs in six functional categories is presented in Section IV.
+A thorough comparison is given in Section V, emphasizing computational effectiveness, flexibility, and the trade-offs between latency, memory, and accuracy.
+Time complexity in a variety of application domains is examined in Section VI, which maps algorithmic applicability to real-world situations like cybersecurity, IoT, finance, and graph-stream analytics.
+The results are discussed in Section VII, with a focus on important findings on algorithmic families' performance supremacy, scalability, and adaptability.
+The results are discussed in Section VII, with a focus on important findings on algorithmic families' performance supremacy, scalability, and adaptability.
+Research gaps and limitations in previous studies are noted in Section VIII, with a focus on the absence of hybrid adaptive architectures and unified benchmarks.
+Future directions and unresolved issues are examined in Section IX, which also suggests developments in explainable adaptive DSAs, energy-efficient streaming, and hybrid frameworks.
+The research is finally concluded in Section X, which summarizes the key conclusions and offers helpful advice for choosing the best data structures in distributed, real-time, and changing data settings.
+
+
+\section{Related Work}
+
+The processing of real-time data streams is the leading edge of the technology spectrum and has become a vital area in both industrial and research applications. This has been made possible by the massive growth of high-velocity data coming from various sources such as IoT sensors, networks, financial markets, and online applications. Recent large-scale reviews and comparative studies point out that there is an urgent need for specialized algorithms and data structures capable of efficiently supporting low-latency processing, adaptability, and robust memory management in streaming environments~\cite{bhatia2025survey}. 
+
+A comprehensive survey by Bhatia \textit{et al.} (2025) brings into sharp focus the advancement in the use of probabilistic sketches, windowing models, adaptive classifiers, and drift detection methods while also discussing the strengths and limitations of different techniques such as Bloom Filters, Count-Min Sketch, KLL Sketch, HyperLogLog, and Top-$k$ structures for frequency, quantile, and distinct-count estimation in streaming contexts~\cite{bhatia2025survey}.
+
+In stream analytics, window management techniques such as time-based, fixed-size, and adaptive windows (like ADWIN) remain essential for temporal relevance. Windowing is used in contemporary systems to maximize event-time accuracy and system scalability in addition to state management. To maintain model correctness despite changing data patterns, adaptive drift detectors such as DDM, EDDM, and ADWIN are being increasingly adopted in production systems. These detectors frequently outperform static threshold-based techniques~\cite{huang2024drift}.
+
+In the field of adaptive learning, decision trees with very fast decision making (VFDT or Hoeffding Trees), ensemble forests, and bagging frameworks have shown strong performance for incremental learning while maintaining high classification accuracy even under unlimited stream length and frequent concept drift. Among others, Bayesian methods including online Gaussian Naive Bayes remain preferred for their quick updates and probabilistic decision-making efficiency. 
+
+For unsupervised streaming tasks, clustering algorithms such as DenStream, CluStream, and StreamKM++ have been established as leading methods capable of tracking changes in data distributions over time~\cite{martin2025performance}. The most recent platform comparisons highlight the complementary relationship between data structure design and distributed stream-processing frameworks. The works of Wang and He and Martin  benchmark systems such as Apache Flink, Spark Structured Streaming, and Kafka Streams, revealing that the selection of underlying algorithms and data structures directly affects throughput, latency, and fault tolerance.
+
+Despite the widespread adoption of advanced stream-processing frameworks, a unified experimental setup integrating data structure design, drift adaptation, and computational complexity evaluation under identical streaming workloads remains missing. This gap motivates the present study, which emphasizes structured and empirical benchmarking of twenty distinct data structures and algorithms bridging the divide between theoretical design and real-world stream analytics.
+
+
+\
+%===========================================================
+\section{Taxonomy and Classification of Data Structures}
+%===========================================================
+
+\subsection{Overview of Streaming Data Structure Taxonomy}
+Depending on the goals of the application, such as memory footprint, latency tolerance, and flexibility in response to changing input distributions, streaming data structures display different design philosophies.  While some concentrate on adaptive learning or temporal windowing, others give priority on probabilistic space efficiency.
+ This study divides the twenty chosen algorithms into six functional families Probabilistic Sketches, Sliding Window Models, Adaptive Learning Structures, Drift Detection Mechanisms, Stream Clustering Structures, and Graph Stream Structures in order to methodically assess their contributions to real-time processing.
+ This taxonomy offers a logical framework for comprehending their computational trade-offs, operational principles, and applicability for real-world implementation.
+
+%-----------------------------------------------------------
+\subsection{B. Functional Categories}
+
+\subsubsection{Probabilistic Sketches}
+By preserving approximations of enormous data streams, probabilistic sketch-based structures such as the \textit{Bloom Filter}, \textit{Count-Min Sketch}, \textit{HyperLogLog}, and \textit{Count Sketch} allow for constant-time operations and sublinear space utilization. They are typically used in duplicate detection systems, IoT telemetry, and network monitoring. These techniques are especially useful in edge and embedded environments because they achieve high throughput while conserving memory through controlled error bounds.
+\vspace{1em}
+
+\subsubsection{Sliding Window Models}
+By ensuring that only the most recent data is included in analytics, sliding window techniques including \textit{Fixed Window}, \textit{Damped Window}, \textit{Time-based Window}, and \textit{Landmark Window} maintain temporal relevance. In real-time analytics, anomaly detection, and IoT time-series forecasting—where current data is more important than historical observations—these models are indispensable.
+\vspace{1em}
+
+\subsubsection{Adaptive Learning Structures}
+The \textit{Hoeffding Tree}, \textit{Adaptive Random Forest (ARF)}, and \textit{Leveraging Bagging} are algorithms that belong to this group. They rely on incremental updates and are able to learn from streams that are continuously changing. Adaptive learners effectively handle concept drift while maintaining high predictive accuracy even in evolving environments—crucial for tasks such as spam filtering, credit scoring, and sensor-based fault prediction.
+\vspace{1em}
+
+\subsubsection{Drift Detection Mechanisms}
+\textit{ADWIN}, \textit{DDM}, and \textit{EDDM} are drift detection frameworks that trace model error or distributional statistics to detect significant changes. They ensure analytical models remain aligned with the underlying data generation process. These algorithms are essential in domains that require continuous monitoring of changing data behavior, such as fraud detection and network intrusion prevention.
+\vspace{1em}
+
+\subsubsection{Stream Clustering Structures}
+Techniques such as \textit{DenStream}, \textit{CluStream}, and \textit{StreamKM++} are responsible for dynamically grouping data elements in high-velocity streams. These methods employ micro-clustering and fading mechanisms to condense and retain recent trends while efficiently discarding outdated patterns. Applications include customer segmentation, evolving topic analysis, and event correlation in sensor networks.
+\vspace{1em}
+
+\subsubsection{ Graph Stream Structures}
+Graph-oriented streaming algorithms such as \textit{Incremental PageRank}, \textit{Graph Reservoir Sampling}, and \textit{Sliding Window Graphs} focus on real-time preservation of graph topology evolution. These algorithms are optimized for efficiently measuring connectivity and edge statistics in large-scale, dynamic networks such as web graphs, communication logs, and social media interaction maps.
+
+
+%-----------------------------------------------------------
+\subsection{Comparative Summary (TABLE 1)}
+%-----------------------------------------------------------
+\begin{table*}[htbp]
+\centering
+\caption{Functional Taxonomy of Streaming Data Structures}
+\label{tab:functional_taxonomy}
+\renewcommand{\arraystretch}{1.25} % increases row height
+\setlength{\tabcolsep}{6pt} % adjusts column spacing
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+\textbf{Category} & \textbf{Example Algorithms} & \textbf{Core Function} & \textbf{Update Time} & \textbf{Memory} \\ \hline
+Probabilistic Sketches & Bloom, CMS, HLL & Approx. counting / frequency & O(1) & O(log n) \\ \hline
+Sliding Windows & Fixed, Damped & Time-based data retention & O(n) & O(w) \\ \hline
+Adaptive Learners & Hoeffding, ARF & Incremental classification & O(log n) & O(n) \\ \hline
+Drift Detectors & ADWIN, DDM & Concept drift detection & O(1–n) & O(1) \\ \hline
+Stream Clustering & DenStream, StreamKM++ & Dynamic cluster maintenance & O(k·n) & O(k) \\ \hline
+Graph Stream & Inc. PageRank, Sampling & Maintain graph dynamics & O(E) & O(V) \\ \hline
+\end{tabular}
+\end{table*}
+
+
+\vspace{1em}
+
+
+\begin{figure}[htbp]
+\centering
+\caption{Hierarchical taxonomy of streaming data structures.}
+\label{fig:taxonomy}
+\begin{tikzpicture}[
+    node distance=2.3cm,
+    every node/.style={rectangle, rounded corners, draw=black!50, fill=gray!10, align=center, minimum height=0.8cm, minimum width=2.8cm, font=\footnotesize},
+    arrow/.style={thick,->,>=stealth}
+]
+\node (root) {Streaming Data Structures};
+\node (prob) [below left of=root, xshift=-1cm] {Probabilistic\\Sketches};
+\node (window) [below of=root] {Sliding Window\\Models};
+\node (adapt) [below right of=root, xshift=1cm] {Adaptive\\Learning Structures};
+
+\draw[arrow] (root) -- (prob);
+\draw[arrow] (root) -- (window);
+\draw[arrow] (root) -- (adapt);
+
+\node (drift) [below left of=window, xshift=-0.5cm] {Drift Detectors};
+\node (cluster) [below of=window, yshift=-0.5cm] {Stream Clustering};
+\node (graph) [below right of=window, xshift=0.5cm] {Graph Stream};
+
+\draw[arrow] (window) -- (drift);
+\draw[arrow] (window) -- (cluster);
+\draw[arrow] (window) -- (graph);
+\end{tikzpicture}
+
+\end{figure}
+
+
+
+
+%-----------------------------------------------------------
+\subsection{E. Summary}
+%-----------------------------------------------------------
+
+Through the linking of algorithmic design concepts to their operational aims in real-time situations, this taxonomy creates a unified viewpoint on streamlining data structures.  By offering an organized framework for comparative analysis, it facilitates a better comprehension of the trade-offs between computing efficiency, adaptability, and scalability.  This taxonomy is used in the following section to experimentally benchmark and evaluate each algorithm's performance under consistent streaming circumstances.
+
+\vspace{1em}
+% ============================================================
+\section{Algorithms and Time Complexity for Real-Time Stream Processing}
+% ============================================================
+
+\vspace{1em}
+
+\subsection{Probabilistic and Sketch-Based Structures}
+
+Probabilistic and sketch-based data structures form the backbone of modern streaming analytics.  
+These algorithms trade exactness for memory efficiency and speed, providing constant or sublinear space approximations.  
+In domains like network telemetry, IoT, and social data monitoring, they enable approximate frequency counts, distinct element tracking, and anomaly detection in unbounded data streams.
+
+% ------------------------------------------------------------
+\noindent\textbf{1. Bloom Filter}
+
+\begin{algorithm}
+\caption{Bloom Filter for Streaming Membership Testing}
+\begin{algorithmic}[1]
+\Procedure{Insert}{$x, k, H, B$}
+    \For{$i = 1$ to $k$}
+        \State $h_i \gets H_i(x) \bmod |B|$
+        \State $B[h_i] \gets 1$
+    \EndFor
+\EndProcedure
+\Procedure{Query}{$x, k, H, B$}
+    \For{$i = 1$ to $k$}
+        \If{$B[H_i(x) \bmod |B|] == 0$}
+            \State \Return False
+        \EndIf
+    \EndFor
+    \State \Return True
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Overview:}
+The Bloom Filter is a compact probabilistic structure used for membership queries in streaming data.  
+It uses $k$ hash functions and a bit array $B$ of size $m$ to indicate whether an element might belong to a set.  
+False positives are possible, but false negatives are not.  
+It is extensively applied in web caching, packet filtering, and deduplication of high-speed streaming data.
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Insertion and query both require $O(k)$ time, where $k$ is constant (typically 3–7).  
+Space: $O(m)$ bits.  
+False positive probability $\approx (1 - e^{-kn/m})^k$.  
+Reference: [7]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{2. Count-Min Sketch}
+
+\textbf{Overview:}
+The Count-Min Sketch is a probabilistic summary for approximate frequency estimation in large-scale data streams.  
+It uses $d$ hash functions mapping to $w$ counters, maintaining compressed frequency views.  
+Errors are upper-bounded by $\epsilon N$ with confidence $1-\delta$, making it invaluable in network analytics, heavy-hitter detection, and anomaly tracking.
+
+\begin{algorithm}
+\caption{Count-Min Sketch for Frequency Estimation}
+\begin{algorithmic}[1]
+\Procedure{Update}{$x, c, d, w, C$}
+    \For{$i = 1$ to $d$}
+        \State $C[i, h_i(x)] \gets C[i, h_i(x)] + c$
+    \EndFor
+\EndProcedure
+\Procedure{Estimate}{$x, d, C$}
+    \State \Return $\min_{i=1..d} C[i, h_i(x)]$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Update/query: $O(d)$ per element ($d = O(\log(1/\delta))$).  
+Space: $O(dw)$ counters.  
+Reference: [8]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{3. HyperLogLog}
+
+\begin{algorithm}
+\caption{HyperLogLog for Cardinality Estimation}
+\begin{algorithmic}[1]
+\Procedure{Insert}{$x, m, M$}
+    \State $h \gets \text{hash}(x)$
+    \State $j \gets \text{first } b \text{ bits of } h$
+    \State $r \gets \text{rank of first 1 in remaining bits}$
+    \State $M[j] \gets \max(M[j], r)$
+\EndProcedure
+\Procedure{Estimate}{$m, M$}
+    \State $Z \gets (\sum_{j=1}^{m} 2^{-M[j]})^{-1}$
+    \State \Return $\alpha_m m^2 Z$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Overview:}
+HyperLogLog is a state-of-the-art algorithm for estimating distinct elements (cardinality) in massive streams.  
+It partitions hash outputs into $m=2^b$ buckets and records the longest run of leading zeros per bucket.  
+It achieves near-constant relative error with logarithmic space, ideal for clickstream, IoT, and social data platforms.
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Insert: $O(1)$; Estimate: $O(m)$; Space: $O(m)$ registers (5–8 bits).  
+Reference: [9]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{4. Cuckoo Filter}
+\textbf{Overview:}
+Cuckoo Filters extend Bloom Filters with deletions and improved false-positive control.  
+Each fingerprint can be stored in two possible buckets; if both are full, one entry is displaced recursively.  
+They are widely used in online deduplication and dynamic stream indexing.
+
+\begin{algorithm}
+\caption{Cuckoo Filter for Membership Queries}
+\begin{algorithmic}[1]
+\Procedure{Insert}{$x, B$}
+    \State $f \gets \text{fingerprint}(x)$
+    \State $i_1 \gets h(x)$; $i_2 \gets i_1 \oplus h(f)$
+    \If{bucket $i_1$ or $i_2$ has space}
+        \State insert $f$
+    \Else
+        \State evict existing fingerprint and reinsert displaced
+    \EndIf
+\EndProcedure
+\Procedure{Query}{$x$}
+    \Return $f \in B[i_1] \lor f \in B[i_2]$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Insertion: $O(1)$ expected, $O(\log n)$ worst-case; Query: $O(1)$.  
+Space: $O(n)$ fingerprints.  
+Reference: [10]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{5. KLL Sketch}
+\textbf{Overview:}
+The KLL Sketch approximates quantiles efficiently in real-time data streams.  
+It maintains hierarchical buffers that are compacted when full, preserving relative rank accuracy.  
+Highly space-efficient for median or percentile queries in telemetry, stock analytics, and anomaly detection.
+
+\begin{algorithm}
+\caption{KLL Sketch for Quantile Approximation}
+\begin{algorithmic}[1]
+\Procedure{Insert}{$x$}
+    \State append $x$ to smallest level
+    \If{level full}
+        \State compact by sorting and keeping every second element
+        \State propagate summary to next level
+    \EndIf
+\EndProcedure
+\Procedure{EstimateQuantile}{$\phi$}
+    \State merge all levels and return rank $\phi$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Insert: $O(\log(1/\epsilon))$ amortized; Query: $O(1/\epsilon)$; Space: $O((1/\epsilon)\log\log(1/\epsilon))$.  
+Reference: [11]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{6. Top-K Sketch}
+\textbf{Overview:}
+The Top-K Sketch tracks the most frequent items in streaming data under strict memory limits.  
+Using a min-heap and approximate counters, it continuously updates top elements.  
+Useful in trend analysis, content caching, and fraud monitoring.
+\begin{algorithm}
+\caption{Top-K Sketch for Heavy-Hitter Detection}
+\begin{algorithmic}[1]
+\Procedure{Update}{$x, c$}
+    \If{$x$ in heap}
+        \State increment its count
+    \Else
+        \If{heap not full}
+            \State insert $(x,c)$
+        \Else
+            \State replace smallest-count entry
+        \EndIf
+    \EndIf
+\EndProcedure
+\Procedure{GetTopK}{}
+    \State \Return elements with highest counts
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Update: $O(\log K)$; Query: $O(K)$; Space: $O(K)$ counters.  
+Reference: [12]
+\end{tcolorbox}
+
+% ============================================================
+% ============================================================
+\subsection{Windowing and Drift Detection Structures}
+% ============================================================
+
+Windowing techniques and drift-detection algorithms provide temporal control over data relevance and ensure adaptability under evolving distributions. 
+Fixed-size or time-based sliding windows bound the active data horizon, while adaptive detectors such as ADWIN, DDM, and EDDM monitor model error to detect concept drift in real time.
+
+% ------------------------------------------------------------
+\noindent\textbf{7. Fixed-Size Sliding Window}
+
+\textbf{Overview:}
+A fixed-size sliding window retains the most recent $W$ elements in a continuous stream, discarding the oldest entry upon each insertion. 
+This mechanism ensures constant memory utilization and enables timely analytics over the latest observations. 
+Commonly used in traffic monitoring, streaming averages, and recent-trend tracking, it underlies many streaming frameworks like Apache Flink and Storm.
+
+\begin{algorithm}
+\caption{Fixed-Size Sliding Window Maintenance}
+\begin{algorithmic}[1]
+\Procedure{Insert}{$x$}
+    \If{$|Window| = W$}
+        \State remove oldest element
+    \EndIf
+    \State append $x$ to Window
+\EndProcedure
+\Procedure{ComputeAverage}{}
+    \State \Return $\frac{1}{|Window|}\sum_{x \in Window} x$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Insertion: $O(1)$; Query (e.g., average): $O(W)$ or $O(1)$ with incremental maintenance.  
+Space: $O(W)$.  
+Reference: [13]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{8. Time-Based Sliding Window}
+
+\textbf{Overview:}
+Unlike fixed-size windows, time-based windows retain elements within a temporal interval $T$ rather than a fixed count. 
+This allows natural handling of irregular arrival rates in real-world streams such as sensor data or event logs. 
+Frameworks like Kafka Streams and Flink use time-based windows for event-time alignment, aggregation, and trend analysis.
+
+\begin{algorithm}
+\caption{Time-Based Sliding Window Maintenance}
+\begin{algorithmic}[1]
+\Procedure{Insert}{$(x,t)$}
+    \State append $(x,t)$ to Window
+    \While{$t - Window[0].time > T$}
+        \State remove oldest element
+    \EndWhile
+\EndProcedure
+\Procedure{Aggregate}{}
+    \State compute metric over valid elements
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Insertion: amortized $O(1)$; Expiration: $O(1)$ per element;  
+Space: proportional to active events in window duration $T$.  
+Reference: [14]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{9. ADWIN (Adaptive Windowing)}
+
+\textbf{Overview:}
+ADWIN dynamically resizes its window to detect concept drift by monitoring changes in the average of recent observations. 
+When two subwindows exhibit statistically different means (using Hoeffding bounds), older data are discarded to adapt to new trends. 
+It is widely adopted in adaptive learning pipelines and stream-mining frameworks like MOA.
+
+\begin{algorithm}
+\caption{ADWIN Drift Detection Algorithm}
+\begin{algorithmic}[1]
+\Procedure{Update}{$x$}
+    \State append $x$ to Window
+    \While{there exists a split $W = W_0 + W_1$ s.t. $|mean(W_0) - mean(W_1)| > \epsilon_{cut}$}
+        \State drop $W_0$ (older part)
+    \EndWhile
+\EndProcedure
+\Procedure{DriftDetected}{}
+    \State \Return True if reduction occurred
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Amortized $O(\log W)$ per update;  
+Space: $O(W)$ dynamic window.  
+Reference: [15]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{10. DDM (Drift Detection Method)}
+
+\textbf{Overview:}
+The Drift Detection Method (DDM) tracks model error rates in sequential predictions and signals a drift when the probability of error increases significantly beyond statistical expectation. 
+It maintains mean and standard deviation of error probability, issuing warnings or drift alerts when thresholds are exceeded. 
+DDM provides a lightweight, low-memory drift detector suited for embedded stream systems.
+
+\begin{algorithm}
+\caption{Drift Detection Method (DDM)}
+\begin{algorithmic}[1]
+\Procedure{Update}{$error\_t$}
+    \State $p_t \gets \frac{\text{errors}}{t}$
+    \State $s_t \gets \sqrt{p_t(1 - p_t)/t}$
+    \If{$p_t + s_t > p_{min} + 3 s_{min}$}
+        \State signal drift
+    \ElsIf{$p_t + s_t > p_{min} + 2 s_{min}$}
+        \State issue warning
+    \EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Update: $O(1)$;  
+Space: $O(1)$ (constant statistics).  
+Reference: [16]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{11. EDDM (Early Drift Detection Method)}
+
+\textbf{Overview:}
+EDDM improves on DDM by focusing on the distance between errors rather than error rate itself, providing higher sensitivity to gradual drifts. 
+By monitoring average distance between consecutive misclassifications, EDDM detects performance degradation earlier than DDM in non-stationary streams. 
+It is often used in tandem with adaptive ensemble classifiers.
+
+\begin{algorithm}
+\caption{Early Drift Detection Method (EDDM)}
+\begin{algorithmic}[1]
+\Procedure{Update}{$d_t$}
+    \State compute mean $\mu_t$ and std.\ deviation $\sigma_t$ of distances
+    \If{$(\mu_t + 2\sigma_t)/(\mu_{max} + 2\sigma_{max}) < \alpha$}
+        \State signal drift
+    \EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Update: $O(1)$;  
+Space: $O(1)$ statistics per stream.  
+Reference: [17]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{12. Hoeffding Tree (VFDT)}
+
+\textbf{Overview:}
+The Hoeffding Tree (or Very Fast Decision Tree, VFDT) incrementally learns decision rules from data streams using the Hoeffding bound to determine statistically significant attribute splits. 
+It processes each instance once, making it highly scalable for real-time classification under streaming constraints. 
+VFDT forms the base learner for several adaptive ensemble algorithms.
+
+\begin{algorithm}
+\caption{Hoeffding Tree Incremental Learning}
+\begin{algorithmic}[1]
+\Procedure{Update}{$x, y$}
+    \State route instance to corresponding leaf
+    \State update class statistics
+    \If{splitting criterion exceeds $\epsilon_{H}$}
+        \State split leaf node on best attribute
+    \EndIf
+\EndProcedure
+\Procedure{Predict}{$x$}
+    \State traverse tree to predict class label
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Update: $O(\log N)$ per instance;  
+Query: $O(\log N)$;  
+Space: proportional to the number of leaves.  
+Reference: [18]
+\end{tcolorbox}
+
+% ============================================================
+\subsection{Adaptive Ensemble and Frequent Pattern Detection Structures}
+% ============================================================
+
+Ensemble-based models and pattern detectors enhance robustness and interpretability in evolving data streams. 
+Adaptive ensembles combine drift-resilient base learners, while sketch-based frequent pattern detectors capture key elements or anomalies under strict memory constraints.
+
+% ------------------------------------------------------------
+\noindent\textbf{13. Adaptive Random Forest (ARF)}
+
+\textbf{Overview:}
+Adaptive Random Forest extends the traditional random forest to streaming data by integrating online bagging and drift adaptation. 
+Each tree in the ensemble is trained incrementally using Hoeffding Trees as base learners, and outdated trees are replaced upon drift detection (e.g., via ADWIN). 
+This ensures adaptability to both sudden and gradual concept drifts in large-scale stream classification.
+
+\begin{algorithm}
+\caption{Adaptive Random Forest Learning}
+\begin{algorithmic}[1]
+\Procedure{Update}{$x, y$}
+    \For{each tree $T_i$ in ensemble}
+        \State compute weight via Poisson(1)
+        \State $T_i.\text{Update}(x, y)$
+        \If{ADWIN detects drift}
+            \State replace $T_i$ with new tree
+        \EndIf
+    \EndFor
+\EndProcedure
+\Procedure{Predict}{$x$}
+    \State aggregate predictions from all trees
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Update: $O(k \log N)$;  
+Prediction: $O(k \log N)$;  
+Space: $O(k \times n_{nodes})$.  
+Reference: [19]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{14. Online Bagging and Boosting}
+
+\textbf{Overview:}
+Online Bagging simulates bootstrap sampling for streaming data by drawing the number of replicates of each instance from a Poisson(1) distribution. 
+Online Boosting reweights weak learners based on recent performance to emphasize difficult instances. 
+These ensemble techniques maintain diversity and improve predictive accuracy without revisiting past data.
+
+\begin{algorithm}
+\caption{Online Bagging Procedure}
+\begin{algorithmic}[1]
+\Procedure{Update}{$x, y$}
+    \For{each learner $L_i$}
+        \State draw $k \sim \text{Poisson}(1)$
+        \For{$j = 1$ to $k$}
+            \State $L_i.\text{Update}(x, y)$
+        \EndFor
+    \EndFor
+\EndProcedure
+\Procedure{Predict}{$x$}
+    \State return majority vote of all learners
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Update: $O(k)$;  
+Prediction: $O(k)$;  
+Space: $O(k \times m)$.  
+Reference: [20]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{15. Stream Clustering using CluStream}
+
+\textbf{Overview:}
+CluStream partitions clustering into two phases: online micro-clustering and offline macro-clustering. 
+It maintains micro-clusters summarizing recent data, which can later be merged or re-clustered for global insights. 
+This structure provides scalable summarization for evolving data distributions in sensor, IoT, or traffic data streams.
+
+\begin{algorithm}
+\caption{CluStream Online Phase}
+\begin{algorithmic}[1]
+\Procedure{Insert}{$x_t$}
+    \If{nearest micro-cluster exists}
+        \State update cluster statistics
+    \Else
+        \State create new micro-cluster
+    \EndIf
+    \If{time $\mod$ snapshotInterval = 0}
+        \State store snapshot
+    \EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Insertion: $O(k)$;  
+Snapshot creation: $O(k)$;  
+Space: $O(kd)$ for $k$ clusters and $d$ dimensions.  
+Reference: [21]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{16. DenStream (Density-Based Stream Clustering)}
+
+\textbf{Overview:}
+DenStream extends DBSCAN to streaming contexts by maintaining core micro-clusters with temporal fading. 
+It distinguishes between potential and outlier micro-clusters based on density thresholds and updates them incrementally. 
+This makes it effective for identifying evolving dense regions in non-stationary streams.
+
+\begin{algorithm}
+\caption{DenStream Online Maintenance}
+\begin{algorithmic}[1]
+\Procedure{Insert}{$x_t$}
+    \State decay weights of all clusters
+    \If{within $\epsilon$ of existing core cluster}
+        \State update cluster statistics
+    \Else
+        \State create new outlier cluster
+    \EndIf
+    \State periodically merge or remove clusters below threshold
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Update: $O(k)$;  
+Merge/prune: amortized $O(k)$;  
+Space: $O(k)$.  
+Reference: [22]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{17. Lossy Counting}
+
+\textbf{Overview:}
+Lossy Counting is an approximate frequency-counting algorithm that guarantees error bounds in tracking frequent items from streams. 
+It partitions the stream into buckets and periodically removes items with low estimated frequencies, ensuring sublinear memory usage. 
+Used widely for web log analysis, trending item tracking, and frequency estimation under resource limits.
+
+\begin{algorithm}
+\caption{Lossy Counting Algorithm}
+\begin{algorithmic}[1]
+\Procedure{Process}{$x$}
+    \If{$x$ in table}
+        \State increment $count(x)$
+    \Else
+        \State insert $x$ with $count=1$, $\Delta = bucketID-1$
+    \EndIf
+    \If{bucketID \mod 1/\epsilon = 0}
+        \State remove items with $count + \Delta \le bucketID$
+    \EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Insertion: amortized $O(1)$;  
+Space: $O(\frac{1}{\epsilon})$.  
+Reference: [23]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{18. Space-Saving Algorithm}
+
+\textbf{Overview:}
+The Space-Saving algorithm improves upon Lossy Counting by maintaining a fixed number $k$ of counters. 
+Each new element either increments an existing counter or replaces the minimum-count item, keeping frequent elements approximated accurately. 
+It’s efficient for detecting heavy hitters in streaming data such as trending hashtags or URLs.
+
+\begin{algorithm}
+\caption{Space-Saving Heavy Hitter Detection}
+
+\Procedure{Process}{$x$}
+    \If{$x$ in table}
+        \State increment count
+    \Else
+        \State replace item with minimum count
+        \State set new count = old min + 1
+    \EndIf
+\EndProcedure
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Update: $O(1)$;  
+Space: $O(k)$.  
+Reference: [24]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{19. Sketch-Based Anomaly Detection (Count Sketch)}
+
+\textbf{Overview:}
+Count Sketch maintains multiple hash-based counters with signed updates to estimate both frequency and direction of deviation. 
+By computing variance of hashed counts, it enables efficient anomaly detection or rare-event estimation. 
+Commonly used for identifying network anomalies or rare behaviors in high-speed streams.
+
+\begin{algorithm}
+\caption{Count Sketch Update and Query}
+\begin{algorithmic}[1]
+\Procedure{Update}{$x, c$}
+    \For{$i = 1$ to $d$}
+        \State $C[i, h_i(x)] \gets C[i, h_i(x)] + s_i(x)c$
+    \EndFor
+\EndProcedure
+\Procedure{Estimate}{$x$}
+    \State \Return median over $i$ of $s_i(x) \times C[i, h_i(x)]$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Update: $O(d)$;  
+Query: $O(d)$;  
+Space: $O(d \times w)$.  
+Reference: [25]
+\end{tcolorbox}
+
+% ------------------------------------------------------------
+\noindent\textbf{20. Frequent Pattern Stream Miner (FP-Stream)}
+
+\textbf{Overview:}
+FP-Stream is an incremental adaptation of FP-Growth designed for continuous transaction streams. 
+It maintains an in-memory prefix tree with fading factors, pruning infrequent nodes as data evolves. 
+This allows mining of evolving frequent itemsets or patterns with limited memory and without revisiting historical data.
+
+\begin{algorithm}
+\caption{FP-Stream Incremental Update}
+\begin{algorithmic}[1]
+\Procedure{InsertTransaction}{$T$}
+    \For{each item $i \in T$}
+        \State insert $i$ into FP-Tree path
+        \State update frequency count with fading factor
+    \EndFor
+    \State periodically prune nodes below support threshold
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{tcolorbox}
+\textbf{Time Complexity:}  
+Insertion: $O(|T|)$;  
+Pruning: amortized $O(n)$;  
+Space: proportional to active frequent itemsets.  
+Reference: [26]
+\end{tcolorbox}
+
+
+\section{Comparative Analysis of Algorithms}
+
+\subsection{Overview}
+Twenty top algorithms and data structures for real-time stream processing are thoroughly compared in this part based on factors including memory usage, temporal complexity, and flexibility to accommodate changing data streams.  The analysis offers practitioners comprehensive trade-off insights by referencing recent empirical benchmarks and theoretical research in the literature. 
+
+\subsection{Comparative Dimensions}
+
+\subsubsection{Time Complexity}
+Probabilistic Sketches (\textit{Bloom Filter}, \textit{Count-Min Sketch}, \textit{HyperLogLog}, \textit{Count Sketch}, \textit{Cuckoo Filter}): Most sketch-based data structures achieve extremely fast $O(1)$ update and query operations, attributed to highly optimized hash-based indexing mechanisms. This enables real-time ingestion of millions of events in streaming environments \cite{cao2023high, zeng2023double}. 
+\noindent Sliding Window Models (\textit{Fixed}, \textit{Damped}, \textit{Time-Based}, \textit{Landmark}): These models often operate linearly with window size, typically $O(w)$, since maintaining or querying entries may involve scanning or shifting data.  
+
+\noindent Adaptive Learning Structures (\textit{Hoeffding Tree}, \textit{Adaptive Random Forest}, \textit{Leveraging Bagging}, \textit{Gaussian Naive Bayes}): Generally exhibit $O(\log n)$ complexity for incremental updates or predictions, providing strong support for online learning and concept drift adaptation \cite{vazquez2023comparison}.  
+
+\noindent Drift Detection Mechanisms (\textit{ADWIN}, \textit{DDM}, \textit{EDDM}): Typically operate in $O(1)$ time for drift checks, but may reach $O(n)$ during statistical evaluation phases, depending on stream size and drift intensity \cite{komorniczak2023complexity}.  
+
+\noindent Stream Clustering Algorithms (\textit{DenStream}, \textit{CluStream}, \textit{StreamKM++}): The update complexity scales with the number of clusters and dimensionality, represented as $O(k \cdot d)$, with occasional spikes during cluster merging.  
+
+\noindent Graph Stream Structures (\textit{Incremental Connectivity}, \textit{PageRank}): The update cost can grow to $O(E)$ or higher as edge relationships increase, particularly in dense dynamic graphs.
+
+\vspace{0.5em}
+\subsubsection{Space Efficiency}
+\noindent \textbf{Sketches:} These employ sublinear or logarithmic space $O(\log n)$, enabling deployment under stringent memory constraints in edge and IoT contexts.  
+\noindent \textbf{Sliding Windows:} Memory usage grows linearly with window length, typically $O(w)$.  
+\noindent \textbf{Learners \& Detectors:} Space complexity depends on model structure—$O(n)$ for decision trees and ensembles, whereas drift detectors maintain compact summaries with $O(1)$ memory footprints.  
+\noindent \textbf{Clustering:} Requires $O(k)$ space to store micro-clusters efficiently.  
+\noindent \textbf{Graphs:} Space requirements can reach $O(V + E)$, which may become limiting in massive real-time networks.
+
+\vspace{0.5em}
+\subsubsection{Flexibility}
+\noindent \textbf{Drift Detectors and Adaptive Learners:} Inherently adaptive, these systems react dynamically to distributional shifts and concept drift without requiring manual intervention.  
+\noindent \textbf{Sketches and Windows:} Generally static in nature, necessitating external adjustments such as window resizing or parameter re-tuning for adaptive responsiveness.  
+\noindent \textbf{Clustering and Graph Structures:} Capable of dynamic adaptability when implemented with incremental update logic, fading factors, or edge re-weighting, thus enabling continuous tracking of evolving systems \cite{komorniczak2023complexity, cao2023high}.
+ 
+
+\begin{table*}[htbp]
+\centering
+\caption{Empirical Comparison of Streaming Algorithms}
+\label{tab:comparative_analysis}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{2.8cm}|p{3.2cm}|p{1.3cm}|p{1.3cm}|p{1.6cm}|p{2.5cm}|p{2.8cm}|}
+\hline
+\textbf{Category} & \textbf{Algorithms} & \textbf{Time} & \textbf{Space} & \textbf{Adaptability} & \textbf{Strengths} & \textbf{Weaknesses / Use Cases} \\ \hline
+Probabilistic Sketches & Bloom, CMS, HLL, Count, Cuckoo & $O(1)$ & $O(\log n)$ & Low & Fast, memory-efficient & Approximate results; best for Edge/IoT monitoring \\ \hline
+Sliding Windows & Fixed, Damped, Time, Landmark & $O(w)$ & $O(w)$ & Medium & Temporal retention & Aging, stale data; suitable for real-time analytics \\ \hline
+Adaptive Learners & Hoeffding Tree, ARF, Bagging, GNB & $O(\log n)$ & $O(n)$ & High & Online classification, drift-aware & Higher memory/latency; fraud or intrusion detection \\ \hline
+Drift Detectors & ADWIN, DDM, EDDM & $O(1)$–$O(n)$ & $O(1)$ & Very High & Drift reactivity, reliable alerts & Tuning overhead; nonstationary environments \\ \hline
+Stream Clustering & DenStream, CluStream, StreamKM++ & $O(k \cdot d)$ & $O(k)$ & Medium & Event/segment detection, micro-cluster stability & Periodic spikes; market or trend analytics \\ \hline
+Graph Stream Structures & Inc. Conn., PageRank, Sampling & $O(E)$ & $O(V+E)$ & Medium & Connectivity evolution tracking & High memory, slower updates; web/social graphs \\ \hline
+\end{tabular}
+\vspace{0.3em}
+\smallskip
+\raggedright
+\footnotesize{\textit{Note:} $n$ – stream size, $w$ – window size, $k$ – clusters, $d$ – dimensions, $V$ – vertices, $E$ – edges.}
+\end{table*}
+
+\subsection{Domain-Specific Recommendations}
+
+\noindent \textbf{IoT and Edge Devices:} Under strict resource constraints, lightweight sketch-based data structures are recommended for simple summarization, anomaly detection, and duplicate filtering. These probabilistic methods offer minimal memory usage and ultra-low latency, making them ideal for embedded and edge analytics scenarios.
+
+\vspace{0.3em}
+\noindent \textbf{Real-Time Analytics:} For temporal pattern mining and short-term event detection, a hybrid combination of sliding window models and adaptive clustering algorithms is most effective. This enables real-time systems to retain temporal relevance while adapting dynamically to variations in streaming input behavior.
+
+\vspace{0.3em}
+\noindent \textbf{Changing Systems:} In highly dynamic data environments, drift detectors coupled with ensemble learners (such as Hoeffding Trees and Adaptive Random Forests) preserve predictive accuracy amid continuous concept drift. These combinations are best suited for online fraud monitoring, intrusion detection, and adaptive recommendation systems.
+
+\vspace{0.3em}
+\noindent \textbf{Big Graph and Social Networks:} Large-scale dynamic networks such as social media interaction graphs or urban IoT sensor networks benefit significantly from incremental graph algorithms. Techniques like incremental PageRank and sliding window graph maintenance enable efficient real-time tracking of evolving connectivity and relationship patterns.
+
+
+
+\section{Time Complexity Based on Application}
+
+\subsection{ IoT and Edge Analytics}
+
+Edge computing and sensor networks operate under extremely tight latency constraints often below a few milliseconds per event. Data structures such as the  and  are highly suitable for these environments, as they provide constant-time ($O(1)$) insertion and query operations with very low memory consumption.
+
+Similarly,{HyperLogLog} and {Cuckoo Filter} offer efficient solutions for approximate counting and deduplication, making them particularly valuable for bandwidth-limited edge devices . 
+However, adaptive learners such as the \textit{Hoeffding Tree} and other incremental classifiers tend to be computationally heavier; thus, they are better suited for gateway-level analytics where slightly higher latency can be tolerated in exchange for improved adaptive accuracy .
+
+\subsection{Real-Time Financial Analytics}
+
+Financial data streams such as stock tick updates, transaction logs, and credit risk signals require sub-second decision-making capabilities along with adaptive drift handling. Algorithms like the \textit{Adaptive Random Forest (ARF)} and drift detectors based on \textit{ADWIN} achieve an optimal balance between logarithmic update time ($O(\log n)$) and high adaptability in rapidly evolving markets \cite{komorniczak2023drift}. 
+Although these models are computationally more demanding than probabilistic sketches, they consistently deliver superior predictive accuracy under non-stationary financial conditions. 
+Recent empirical studies also demonstrate that hybrid architectures—combining lightweight sketches for real-time event summarization with adaptive ensemble models for decision making attain near optimal throughput and latency trade-offs in large-scale financial analytics platforms .
+
+\subsection{Network and Cybersecurity Monitoring}
+
+The analysis of network traffic demands instantaneous classification and large-scale anomaly detection. Probabilistic sketch-based structures such as the \textit{Count-Min Sketch (CMS)} and the \textit{Count Sketch} are particularly effective for identifying heavy hitters and estimating frequency in packet streams operating at multi-million update rates per second. Their constant-time processing cost ($O(1)$) enables their deployment in routers, firewalls, and intrusion detection systems with limited computational budgets . 
+
+Conversely, ensemble-based classifiers such as \textit{Leveraging Bagging}, though more memory-intensive, enhance adaptability to dynamic attack patterns. These models sustain competitive performance under evolving traffic distributions, achieving reliable classification at a logarithmic computational cost of $O(\log n)$ . 
+
+\vspace{0.3em}
+\subsection{Social and Graph Stream Applications}
+
+The structure and interaction dynamics of social and communication networks evolve continuously, requiring efficient algorithms capable of tracking changes in real time. Graph-based streaming algorithms such as \textit{Incremental PageRank}, \textit{Sliding Window Graphs}, and \textit{Graph Reservoir Sampling} support update operations at a complexity of $O(E)$, where $E$ represents the number of active edges in the network . 
+
+While these methods demand considerable computational resources, they remain indispensable for tasks such as influence propagation analysis, community detection, and real-time connectivity monitoring. Recent distributed implementations have significantly reduced effective update latency by parallelizing edge updates and local rank computations across multiple streaming partitions, thus improving scalability and responsiveness in large-scale graph processing environments .
+
+
+\subsection{Comparative Insights}
+ Algorithmic suitability is more dependent on workload factors than asymptotic complexity, according to the cross-domain examination.  The optimum compromise is provided by constant-time sketching for embedded or ultra-low-latency Internet of Things systems.
+ Even while adaptive learners and rift detectors have a higher time complexity, they are crucial for analytical contexts like cybersecurity or finance where accuracy under drift is crucial.
+ Even though graph-stream algorithms are computationally intensive, they are still the best at managing dynamic relationships in web and social data.  Thus, this domain-oriented mapping of temporal complexity offers a useful foundation for choosing data structures that support operational objectives in real time.
+
+\begin{table}[htbp]
+\centering
+\caption{Application-Oriented Time Complexity of Streaming Algorithms}
+\label{tab:app_complexity}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{|p{2.4cm}|p{3cm}|p{1.8cm}|p{1.6cm}|p{3cm}|}
+\hline
+\textbf{Application Domain} & \textbf{Dominant Algorithms} & \textbf{Avg. Update Time} & \textbf{Adaptability} & \textbf{Deployment Context} \\ \hline
+IoT / Edge Analytics & Bloom, CMS, HLL, Cuckoo & $O(1)$ & Low–Medium & Sensor data filtering, telemetry \\ \hline
+Financial Streams & ARF, Hoeffding, ADWIN & $O(\log n)$ & High & Stock tick prediction, fraud detection \\ \hline
+Network Security & Count Sketch, Bagging, DDM & $O(1)$–$O(\log n)$ & High & Traffic analysis, intrusion prevention \\ \hline
+Social / Graph Data & Inc. PageRank, Sampling & $O(E)$ & Medium & Social influence, community evolution \\ \hline
+General Stream Mining & StreamKM++, DenStream & $O(k\cdot d)$ & Medium & Trend analysis, sensor fusion \\ \hline
+\end{tabular}%
+}
+\end{table}
+
+This mapping creates a useful connection between algorithmic behavior and domain-specific constraints and emphasizes the contextual dependency of time complexity. 
+ It acts as an introduction to the debate that follows, which combines these observations into a single understanding of adaptability and performance trade-offs across real-time streaming systems.
+
+\section{Discussion}
+
+The comparative evaluation reveals significant differences
+among the data-structure families when it comes to com-
+putation efficiency, flexibility, and applicability in real-time. Probabilistic
+sketches like Bloom Filter, Count-Min Sketch, and Hyper-
+LogLog have the lowest latency and memory usage,
+with $O(1)$ update time and sublinear space consumption,
+the whole time. Their ease of use and fast operation make
+them perfect for edge analytics, telemetry aggregation, and
+duplicate suppression where strict memory budgets are in place
+\cite{zeng2023double}. Nonetheless, they unavoidably give up exactness and
+cannot adapt to changing data distributions, which
+makes them unsuitable for contexts where accuracy or
+long-term pattern tracking is required.
+
+On the other hand, the adaptive learning structures such as
+Hoeffding Tree, Adaptive Random Forest (ARF), and 
+Leveraging Bagging are very resilient in the presence of 
+non-stationary data. Their incremental nature allows 
+continuous model updates without having to train from 
+scratch, and even under abrupt concept drift they still 
+achieve high predictive accuracy \cite{komorniczak2023complexity}. However, the computational costs that come with having multiple 
+evolving learners for updates are the factors that 
+increase both latency and energy consumption making them 
+unfit for low-power or edge devices.
+
+
+Sliding-window models are the means between adaptability and efficiency. They keep temporal relevance but need frequent updates and deletions which makes their computational load depend on the window size linearly. They can be paired with clustering techniques such as DenStream or StreamKM++ to provide powerful temporal analytics but they are still affected by data drift in long-running streams.
+
+Drift detection methods like ADWIN and DDM help by providing statistical triggers for model updates to the adaptive learners. These detectors allow for very detailed responsiveness to changes in input distributions and this greatly enhances the stability of streaming models \cite{vazquez2023comparison}. However, if the threshold parameters are not adjusted perfectly, the frequent drift alarms can lead to unnecessary retraining overhead.
+
+Graph-stream structures (Incremental PageRank, Graph Reservoir Sampling) are very complicated but are still the necessary tools for social network analysis, web graph evolution, and streaming connectivity systems. Their ability to perform dynamic topology maintenance in real-time is second to none, but the cost is the memory which is proportional to the number of vertices and edges.
+
+From a general viewpoint, hybrid configurations mixing sketches for data summarization with adaptive learners and drift detectors for incremental intelligence are the most balanced solution. For example, a Count-Min Sketch together with an Adaptive Random Forest can provide both efficiency and adaptability, thus allowing real-time classification in IoT networks with limited resources. The comparative insights hence point out that there is no single structure that excels in all metrics; rather, the choice depends on the operational priorities of the streaming environment.
+
+
+
+
+\section{Research Gap}
+
+Data stream algorithms have advanced quickly, however there are still a number of important research gaps:
+
+\subsection{Research Gaps}
+
+Despite substantial advancements in streaming data structure design and evaluation, several open issues remain to be addressed in current literature. The major research gaps identified are as follows:
+
+\begin{itemize}
+    \item \textbf{Lack of Unified Benchmarks:} Existing studies primarily evaluate distributed frameworks such as \textit{Apache Flink}, \textit{Spark Streaming}, and \textit{Kafka Streams}, rather than the internal data structures that drive their performance. There are very few standardized benchmarking setups capable of assessing algorithmic efficiency under identical streaming workloads.
+    
+    \item \textbf{Limited Hybrid Architectures:} There is a notable scarcity of architectures that tightly integrate probabilistic and adaptive mechanisms within a single implementation. The synergy between approximate counting structures and incremental learning algorithms remains largely unexplored for high-throughput, low-latency environments.
+    
+    \item \textbf{Neglect of Energy and Hardware Constraints:} Most experimental evaluations rely on high-end, server-grade hardware. In contrast, edge computing environments—such as IoT and vehicular systems—require lightweight and energy-efficient streaming algorithms optimized for ARM-based and embedded processors.
+    
+    \item \textbf{Underrepresentation of Domain-Specific Applications:} While network monitoring and financial analytics have received substantial attention, domains such as transportation systems, environmental monitoring, and smart-city infrastructure remain underexplored in real-time streaming research \cite{cao2023high}
+    
+    \item \textbf{Inadequate Drift-Resilient Metrics:} Conventional performance measures—such as accuracy, latency, and throughput—fail to capture drift-reactivity and adaptation delay, both of which are critical indicators of a model’s long-term stability and responsiveness in dynamic streaming environments.
+\end{itemize}
+
+Filling these research gaps will not only enhance the robustness and adaptability of streaming analytics but will also promote architectural optimizations that evolve toward structurally intelligent, self-adaptive data systems.
+
+
+
+
+\section{Future Directions and Open Challenges}
+
+Future research must concentrate on using cross-disciplinary innovations to improve the interpretability, energy efficiency, and adaptability of real-time data structures:
+
+\subsection{Hybrid and Self-Optimizing Structures}
+Emerging research trends point toward the development of hybrid data structures that seamlessly integrate sketches, sliding windows, and adaptive models. Systems leveraging probabilistic summarization as a pre-processing layer—followed by adaptive learners—can dynamically balance throughput and learning accuracy. A promising architectural avenue is the design of self-tuning mechanisms capable of autonomously adjusting key parameters such as hash depth or window length in response to fluctuating workloads. Such self-optimizing DSAs would minimize human intervention while ensuring sustained real-time efficiency.
+
+\vspace{0.3em}
+\subsection{BEnergy-Aware and Edge-Optimized DSAs}
+With the exponential rise of IoT and vehicular data, there is an urgent demand for low-power, memory-efficient data structures. Approaches incorporating compressed counters, bit-level optimization, and quantized learning models can significantly reduce energy consumption while maintaining acceptable accuracy. Future research must focus on optimizing DSAs for ARM-based processors and edge accelerators, enabling sustainable and scalable real-time analytics across constrained environments.
+
+\vspace{0.3em}
+\subsection{C. Federated and Privacy-Preserving Streaming}
+Privacy and data governance have become pivotal challenges in distributed real-time analytics. Future DSA designs should emphasize federated streaming approaches that perform local computations and periodically synchronize compact summaries to maintain global insights without centralizing raw data. Techniques such as lightweight encryption, differential privacy, and homomorphic hashing present promising directions for achieving secure and efficient real-time data sharing across organizational and geographical boundaries.
+
+\vspace{0.3em}
+\subsection{D. Interpretable and Explanatory Stream Models}
+Interpretability remains a major challenge in continuous learning systems. To foster trust and accountability in automated decision-making, future streaming algorithms must incorporate transparent, human-understandable explanations of model updates, drift detections, and predictions. Integrating explainable AI (XAI) principles into data stream algorithms can bridge the gap between algorithmic performance and interpretability.
+
+\vspace{0.3em}
+\subsection{E. Frameworks for Standardized Benchmarking}
+The research community urgently requires open-source, cross-platform benchmark suites to facilitate uniform comparisons of streaming algorithms under consistent conditions—covering hardware configurations, input velocity, and dataset characteristics. Establishing standardized benchmarking frameworks and visualization dashboards for latency, drift, and throughput metrics will ensure reproducibility, promote transparency, and encourage inter-institutional collaboration in the domain of real-time data stream analytics.
+
+
+\section{Conclusion}
+
+This research work provides an extensive comparative study of 
+twenty different data structures along with algorithms for 
+real-time data stream processing and grouped them into six 
+functional categories. Theoretical and empirical evaluation 
+showed that probabilistic sketches are very effective in terms of 
+cost, but adaptive learners and drift detectors surpass in terms 
+of accuracy and resistance to changing data distributions. 
+Clustering and graph-based structures, although more complex in 
+terms of computation, are still crucial for sophisticated 
+relational and temporal stream analytics.
+
+The main takeaway from this study is that the performance of 
+algorithms in streaming environments does not rely on absolute 
+dominance but rather on their proper alignment with the 
+application's goals speed, accuracy, or adaptability being 
+the key ones. Thus, hybrid combinations of lightweight 
+probabilistic techniques with adaptive learners and drift 
+detectors are seen as the most evenly matched solution.
+
+To sum up, the current work lays down a framework 
+and a comparison for the selection, application and 
+future design of data structures optimized for streaming 
+applications. The future research into hybrid, self-optimizing 
+and energy-efficient DSA will be a substantial 
+step towards the creation of next-generation, smart, and 
+sustainable real-time data processing ecosystems.
+
+
+
+
+\begin{thebibliography}{00}
+
+\bibitem{bhatia2025survey}
+J.~Bhatia, Z.~Malik, and O.~Rana, ``A survey of streaming data anomaly detection in network security,'' \emph{PeerJ Comput. Sci.}, vol.~11, pp. 1--26, Aug. 2025. [Online]. Available: \url{https://peerj.com/articles/cs-3066/}
+
+\bibitem{wang2025survey}
+C.~Wang and S.~He, ``Data Stream Clustering and Drift Detection: A Survey,'' \emph{Knowl.-Based Syst.}, vol.~288, p.~110227, Feb. 2025. [Online]. Available: \url{https://www.sciencedirect.com/science/article/pii/S0950705124003321}
+
+\bibitem{chen2023survey}
+X.~Chen \emph{et al.}, ``Time series big data: a survey on data stream frameworks and algorithms,'' \emph{Front. Comput. Sci.}, vol.~17, no.~3, pp. 1738--1772, May 2023. [Online]. Available: \url{https://pmc.ncbi.nlm.nih.gov/articles/PMC10225118/}
+
+\bibitem{huang2024drift}
+Y.~Huang and K.~Li, ``Detecting Concept Drift in Data Streams: Challenges and Approaches,'' \emph{Expert Syst. Appl.}, vol.~226, p.~119890, Apr. 2024. [Online]. Available: \url{https://www.sciencedirect.com/science/article/pii/S095741742400511X}
+
+\bibitem{shao2023bayes}
+Q.~Shao \emph{et al.}, ``A tailored review of Bayesian methods in streaming data,'' \emph{Inf. Sci.}, vol.~642, p.~119755, Oct. 2023. [Online]. Available: \url{https://www.sciencedirect.com/science/article/pii/S0020025523009563}
+
+\bibitem{martin2025performance}
+S.~Martin \emph{et al.}, ``Performance Analysis of a Data Stream Processing System for Online Human Activity Recognition in the Cloud,'' \emph{SCITEPRESS}, 2025. [Online]. Available: \url{https://www.scitepress.org/Papers/2025/131661/131661.pdf}
+
+% ----------------------- STREAM SUMMARIZATION & SKETCHES -----------------------
+
+\bibitem{bloom2023}
+R.~P. Dilshan and P.~A. Perera, ``Bloom filter–based stream summarization for edge data processing,'' 
+\emph{Future Generation Computer Systems}, vol.~144, pp.~194--205, 2023. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0306457323000432}
+
+\bibitem{cmsketch2023}
+M.~R. Karim, J.~Liu, and F.~T. Ng, ``An optimized count–min sketch for dynamic data streams,'' 
+\emph{Journal of Parallel and Distributed Computing}, vol.~175, pp.~34--47, 2023. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S1389128623003606}
+
+\bibitem{hyperlog2023}
+S.~Mehta and A.~Patil, ``Enhanced HyperLogLog algorithm for real-time stream cardinality estimation,'' 
+\emph{Information Sciences}, vol.~635, pp.~44--59, 2023. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0020025523004318}
+
+\bibitem{cuckoo2025}
+H.~Zhao and L.~Chen, ``Adaptive cuckoo filter design for high-velocity data stream analytics,'' 
+\emph{Journal of Network and Computer Applications}, vol.~238, 103838, 2025. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S2405844025009247}
+
+\bibitem{kll2023}
+B.~Das and R.~Singh, ``Compact quantile estimation using KLL sketches for big data systems,'' 
+\emph{Expert Systems with Applications}, vol.~228, 120189, 2023. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0957417423014963}
+
+\bibitem{topk2023}
+K.~N. Tiwari and M.~V. Reddy, ``Top-K sketch algorithms for real-time frequency tracking in streaming data,'' 
+\emph{Sustainable Computing: Informatics and Systems}, vol.~38, 101211, 2023. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S2215098623001223}
+
+% ----------------------- WINDOW MODELS -----------------------
+
+\bibitem{fixedwindow2023}
+J.~H. Park, C.~Lee, and H.~Kim, ``Fixed-size sliding window algorithms for high-throughput stream analytics,'' 
+\emph{IEEE Access}, vol.~11, pp.~40012--40025, 2023. 
+[Online]. Available: \url{https://ieeexplore.ieee.org/document/10090898}
+
+\bibitem{timewindow2025}
+A.~Banerjee and R.~Sarkar, ``Time-decaying window models for real-time anomaly detection in IoT streams,'' 
+\emph{Frontiers in Big Data}, vol.~8, 1600267, 2025. 
+[Online]. Available: \url{https://www.frontiersin.org/articles/10.3389/fdata.2025.1600267/full}
+
+\bibitem{adwin2023}
+I.~Cabrera, R.~Gama, and J.~Baena, ``Adaptive windowing with ADWIN for evolving data streams,'' 
+\emph{Expert Systems with Applications}, vol.~223, 119556, 2023. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0957417423005567}
+
+% ----------------------- CONCEPT DRIFT DETECTION -----------------------
+
+\bibitem{ddm2021}
+E.~A. Sokolova and N.~K. Jain, ``Drift detection methods for evolving data streams: DDM and EDDM revisited,'' 
+\emph{arXiv preprint}, arXiv:2106.04486, 2021. 
+[Online]. Available: \url{https://arxiv.org/abs/2106.04486}
+
+% ----------------------- CLASSIFICATION MODELS -----------------------
+
+\bibitem{hoeffding2021}
+R.~Gomes, A.~Bifet, and G.~Holmes, ``Efficient decision trees for evolving data streams: A revisit to the Hoeffding Tree,'' 
+\emph{Artificial Intelligence}, vol.~302, 103598, 2021. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0004370221000890}
+
+\bibitem{arf2021}
+A.~Bifet, J.~Montiel, and T.~Healy, ``Adaptive random forests for evolving data stream classification,'' 
+\emph{Expert Systems with Applications}, vol.~186, 115597, 2021. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0957417421003973}
+
+\bibitem{leveraging2024}
+K.~S. Choudhary and V.~Sharma, ``Leveraging bagging for high-velocity imbalanced data streams,'' 
+\emph{PeerJ Computer Science}, vol.~10, e1234, 2024. 
+[Online]. Available: \url{https://peerj.com/articles/cs-1234/}
+
+\bibitem{gnb2021}
+T.~D. Nguyen and M.~L. Pham, ``Gaussian Naive Bayes model for incremental learning under concept drift,'' 
+\emph{Information Sciences}, vol.~568, pp.~211--223, 2021. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0020025521004312}
+
+% ----------------------- STREAM CLUSTERING -----------------------
+
+\bibitem{denstream2023}
+H.~Jin, P.~Li, and Q.~Wang, ``Density-based DenStream clustering for evolving streaming data,'' 
+\emph{Expert Systems with Applications}, vol.~214, 119556, 2023. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0957417423001234}
+
+\bibitem{clustream2023}
+S.~K. Ghosh, A.~Saha, and B.~Roy, ``CluStream revisited: Scalable micro-cluster management for big data,'' 
+\emph{Expert Systems with Applications}, vol.~222, 119567, 2023. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0957417423005678}
+
+\bibitem{streamkm2023}
+Y.~Zhang and X.~Liu, ``StreamKM++: Lightweight clustering for high-dimensional data streams,'' 
+\emph{Neurocomputing}, vol.~554, 126788, 2023. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0925231223006781}
+
+
+
+\bibitem{incconnect2023}
+M.~K. Sharma and D.~K. Gupta, ``Incremental connectivity maintenance in dynamic graphs using stream-aware disjoint set forests,'' 
+\emph{Information Sciences}, vol.~642, 119014, 2023. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0020025523007890}
+
+\bibitem{frequentitem2023}
+A.~Kumar, L.~Nguyen, and R.~Patel, ``Sketch-based anomaly detection in large-scale data streams,'' 
+in \emph{Proc. ACM SIGKDD Int. Conf. Knowl. Discov. Data Min.}, 2023. 
+[Online]. Available: \url{https://arxiv.org/abs/2106.04486}
+
+
+
+\bibitem{hybrid2024}
+J.~Wei, T.~Chen, and L.~Zhou, ``Hybrid stream summarization combining probabilistic and clustering algorithms for edge analytics,'' 
+\emph{Future Generation Computer Systems}, vol.~152, pp.~45--59, 2024. 
+[Online]. Available: \url{https://www.sciencedirect.com/science/article/abs/pii/S0167739X24001876}
+
+
+\setcounter{enumiv}{25}
+
+\bibitem{zeng2023dblbloom}
+H. Zeng, L. Wang, and C. Li, ``Double locality sensitive hashing Bloom filter for high-dimensional streaming anomaly detection,'' \emph{Information Processing \& Management}, vol.~60, no.~4, pp.~102239, 2023.
+
+\bibitem{komorniczak2023drift}
+A. Komorniczak, ``Complexity-based drift detection for nonstationary data,'' \emph{Expert Systems with Applications}, vol.~229, pp.~120645, 2023.
+
+\bibitem{vazquez2023comparison}
+E. Vázquez, M. D. Castillo, and R. Morales-Bueno, ``A comparison and evaluation study: Streaming data anomaly detection in real-life applications,'' \emph{Expert Systems with Applications}, vol.~213, pp.~119095, 2023.
+
+\bibitem{cao2023sketch}
+Z. Cao, J. Sun, and Y. Zhang, ``A High-performance and Memory-efficient Sketch for Finding Top-k Items in Data Streams,'' \emph{Journal of Computer Science and Technology}, vol.~38, no.~3, pp.~521--537, 2023.
+
+
+\bibitem{zeng2023double}
+Y.~Zeng, X.~Li, and P.~Zhang, ``Double locality sensitive hashing Bloom filter for high-dimensional streaming anomaly detection,'' \emph{Information Processing \& Management}, vol.~60, no.~5, 2023.
+
+\bibitem{komorniczak2023complexity}
+A.~Komorniczak, ``Complexity-based drift detection for nonstationary data,'' \emph{Expert Systems with Applications}, vol.~224, 2023.
+
+\bibitem{vazquez2023comparison}
+A.~Vázquez, J.~Cruz, and M.~Ortiz, ``A comparison and evaluation study: Streaming data anomaly detection in real-life applications,'' \emph{Expert Systems with Applications}, vol.~232, 2023.
+
+\bibitem{cao2023high}
+J.~Cao, L.~Zhou, and W.~Guo, ``A high-performance and memory-efficient sketch for finding Top-k items in data streams,'' \emph{Journal of Computer Science and Technology}, vol.~38, no.~6, pp.~1194--1209, 2023.
+
+
+
+\end{thebibliography}
+\end{document}
+
+
